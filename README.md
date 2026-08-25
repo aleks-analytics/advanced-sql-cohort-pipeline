@@ -1,30 +1,49 @@
-Advanced SQL & Cohort Analytics Pipeline / Аналитический SQL-пайплайн когортного анализа
-English Version
- | 
-Русская версия
-🇬🇧 English Version
-📌 Project Overview
-An end-to-end analytical SQL pipeline built with Python, SQLite, and SQLAlchemy to evaluate monthly user cohorts, task completion metrics, and revenue dynamics from relational tables (users, codesubmit, transaction, language).
+# SQL Cohort & User Performance Analysis
 
-🏗️ SQL Architecture & CTE Pipeline
-The query is architected as an 8-stage modular Common Table Expression (CTE) pipeline:
+An analytical SQL pipeline written in SQLite and Python (SQLAlchemy, Pandas) to evaluate monthly user retention, task success rates, and revenue trends across multiple relational tables.
 
-1. us_agg: Active user percentage grouped by registration month.
-2. codesubmit_per_month: Monthly total and successful code submissions.
-3. month_revenue: Monthly revenue and running cumulative historical maximum.
-4. code_lang: User performance breakdown per programming language.
-5. five_perc_prep: Percentile ranking per language using PERCENT_RANK().
-6. five_perc: Extracts the 95th percentile threshold.
-7. top5per_us: Aggregates top 5% user IDs using GROUP_CONCAT.
-8. for_last: Assembles master report and retrieves previous month revenue via LAG().
-🛠️ Key Technical Features:
-Window Percentiles (PERCENT_RANK() OVER): Dynamically isolates the top 5% performing programmers per language within each monthly cohort.
-Time-Series Lookups (LAG() OVER): Accesses prior month revenue without expensive self-joins.
-Running Aggregations: Calculates cumulative running revenue max via MAX(SUM(...)) OVER (ORDER BY ...).
-String Aggregation (GROUP_CONCAT): Compiles high-performing user IDs into compact relational records.
-Note on Dataset: This pipeline was developed and benchmarked on an anonymized, synthetic relational dataset designed to validate complex SQL edge cases and window function logic.
+---
 
-🚀 Quickstart
-Clone the repository: git clone https://github.com/aleks-analytics/advanced-sql-cohort-pipeline.git
-Install dependencies: pip install pandas sqlalchemy matplotlib seaborn plotly
-Launch the notebook: jupyter notebook
+## Overview
+
+The query processes 4 tables (`users`, `codesubmit`, `transaction`, `language`) into a single monthly cohort report. 
+
+It handles:
+- User activity rates by registration month
+- Monthly code submissions vs. successful completions
+- Cumulative running revenue max
+- Dynamic identification of the top 5% programmers per language (via `PERCENT_RANK`)
+- Filtering for cohorts where revenue grew month-over-month (via `LAG`)
+
+---
+
+## SQL Pipeline Structure
+
+The logic is broken down into 8 modular Common Table Expressions (CTEs):
+
+1. **`us_agg`**: Calculates active user share grouped by `date_joined` (Year-Month).
+2. **`codesubmit_per_month`**: Counts total submissions and successful attempts per month.
+3. **`month_revenue`**: Computes monthly revenue and running max via `MAX(SUM(...)) OVER (ORDER BY ...)`.
+4. **`code_lang`**: Groups user submissions and successes by programming language and month.
+5. **`five_perc_prep`**: Calculates percentile ranks for each user within their language using `PERCENT_RANK()`.
+6. **`five_perc`**: Identifies the 95th percentile threshold (top 5% cut-off).
+7. **`top5per_us`**: Aggregates top user IDs into a comma-separated list using `GROUP_CONCAT`.
+8. **`for_last`**: Joins all intermediate tables and pulls the previous month's revenue using `LAG()`.
+
+The final `SELECT` filters out any cohorts that did not show positive revenue growth compared to the prior month.
+
+---
+
+## Note on Synthetic Data
+
+This pipeline was built and tested on an anonymized synthetic dataset designed to validate edge cases in complex SQL queries (window functions, multi-level CTE joins, string aggregations).
+
+---
+
+## Setup & Execution
+
+```bash
+git clone https://github.com/aleks-analytics/advanced-sql-cohort-pipeline.git
+cd advanced-sql-cohort-pipeline
+pip install pandas sqlalchemy matplotlib seaborn plotly
+jupyter notebook
